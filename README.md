@@ -59,6 +59,7 @@ The [`examples/`](examples/) directory contains ready-to-use Dockerfiles for gen
 | [`examples/maven/`](examples/maven/) | Maven | `dependency-tree.txt` |
 | [`examples/poetry/`](examples/poetry/) | Poetry | `poetry.lock` |
 | [`examples/uv/`](examples/uv/) | uv | `uv.lock` |
+| [`examples/pip/`](examples/pip/) | pip | `requirements-locked.txt` |
 | [`examples/gradle/`](examples/gradle/) | Gradle | `gradle.lockfile` |
 
 Each example installs the package manager, generates a lockfile from code mounted at `$SEMGREP_WORKSPACE`, and writes the result to `$SEMGREP_OUTPUT`.
