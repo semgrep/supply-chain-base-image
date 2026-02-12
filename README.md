@@ -74,6 +74,31 @@ docker run --rm \
   lockfile-npm
 ```
 
+### SBOM Generation
+
+The [`examples/sbom/`](examples/sbom/) directory contains ready-to-use Dockerfiles for generating CycloneDX SBOMs.
+
+| Example | Tool | Output |
+|---|---|---|
+| [`examples/sbom/npm/`](examples/sbom/npm/) | `@cyclonedx/cyclonedx-npm` | `bom.json` |
+| [`examples/sbom/maven/`](examples/sbom/maven/) | `cyclonedx-maven-plugin` | `bom.json` |
+| [`examples/sbom/poetry/`](examples/sbom/poetry/) | `cyclonedx-py` | `bom.json` |
+| [`examples/sbom/uv/`](examples/sbom/uv/) | `uv export` | `bom.json` |
+| [`examples/sbom/pip/`](examples/sbom/pip/) | `cyclonedx-py` | `bom.json` |
+| [`examples/sbom/gradle/`](examples/sbom/gradle/) | `cyclonedx-gradle-plugin` | `bom.json` |
+
+Each example generates a CycloneDX JSON SBOM from code mounted at `$SEMGREP_WORKSPACE` and writes `bom.json` to `$SEMGREP_OUTPUT`.
+
+For instance, to generate an SBOM for a uv project:
+
+```bash
+docker build -t sbom-uv examples/sbom/uv/
+docker run --rm \
+  -v "$(pwd):/semgrep/workspace" \
+  -v "./outputs:/semgrep/outputs" \
+  sbom-uv
+```
+
 ## Building Locally
 
 ```bash

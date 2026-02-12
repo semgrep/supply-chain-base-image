@@ -1,0 +1,12 @@
+initscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'org.cyclonedx:cyclonedx-gradle-plugin:1.10.0'
+    }
+}
+
+rootProject {
+    apply plugin: org.cyclonedx.gradle.CycloneDxPlugin
+}
