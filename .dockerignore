@@ -1,0 +1,6 @@
+.git
+examples
+*.md
+LICENSE
+.github
+.dockerignore
