@@ -51,23 +51,23 @@ docker run --rm \
 
 ## Examples
 
-The [`examples/`](examples/) directory contains ready-to-use Dockerfiles for generating lockfiles with common package managers.
+The [`examples/lockfiles/`](examples/lockfiles/) directory contains ready-to-use Dockerfiles for generating lockfiles with common package managers.
 
 | Example | Package Manager | Lockfile Generated |
 |---|---|---|
-| [`examples/npm/`](examples/npm/) | npm | `package-lock.json` |
-| [`examples/maven/`](examples/maven/) | Maven | `dependency-tree.txt` |
-| [`examples/poetry/`](examples/poetry/) | Poetry | `poetry.lock` |
-| [`examples/uv/`](examples/uv/) | uv | `uv.lock` |
-| [`examples/pip/`](examples/pip/) | pip | `requirements-locked.txt` |
-| [`examples/gradle/`](examples/gradle/) | Gradle | `gradle.lockfile` |
+| [`examples/lockfiles/npm/`](examples/lockfiles/npm/) | npm | `package-lock.json` |
+| [`examples/lockfiles/maven/`](examples/lockfiles/maven/) | Maven | `dependency-tree.txt` |
+| [`examples/lockfiles/poetry/`](examples/lockfiles/poetry/) | Poetry | `poetry.lock` |
+| [`examples/lockfiles/uv/`](examples/lockfiles/uv/) | uv | `uv.lock` |
+| [`examples/lockfiles/pip/`](examples/lockfiles/pip/) | pip | `requirements-locked.txt` |
+| [`examples/lockfiles/gradle/`](examples/lockfiles/gradle/) | Gradle | `gradle.lockfile` |
 
 Each example installs the package manager, generates a lockfile from code mounted at `$SEMGREP_WORKSPACE`, and writes the result to `$SEMGREP_OUTPUT`.
 
 For instance, to generate a `package-lock.json` for an npm project:
 
 ```bash
-docker build -t lockfile-npm examples/npm/
+docker build -t lockfile-npm examples/lockfiles/npm/
 docker run --rm \
   -v "$(pwd):/semgrep/workspace" \
   -v "./outputs:/semgrep/outputs" \
