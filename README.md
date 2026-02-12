@@ -1,106 +1,126 @@
-# supply-chain-base-image
+# Supply Chain Base Image
 
-Base Docker image for supply chain analysis tooling. Built from `debian:bookworm-slim`.
+A ready-to-use Docker base image for generating lockfiles and Software Bills of Materials (SBOMs) from your source code. Built on `debian:bookworm-slim`, it provides a consistent foundation for supply chain analysis across multiple package managers.
 
-## Image
+## Getting Started
 
-```
-ghcr.io/semgrep/supply-chain-base-image
-```
+### Prerequisites
 
-### Pulling
+- [Docker](https://docs.docker.com/get-docker/) installed on your machine
+
+### Quick Start
+
+Pull the base image:
 
 ```bash
 docker pull ghcr.io/semgrep/supply-chain-base-image:main
 ```
 
-### Environment Variables
+Then pick an example below that matches your project's package manager, build it, and run it against your code.
 
-| Variable | Default | Description |
+## How It Works
+
+The base image sets up two standard directories:
+
+| Directory | Environment Variable | Purpose |
 |---|---|---|
-| `SEMGREP_WORKSPACE` | `/semgrep/workspace` | Mount point for source code to use to generate a lockfile/SBOM |
-| `SEMGREP_OUTPUT` | `/semgrep/outputs` | Directory for lockfile/SBOM outputs |
+| `/semgrep/workspace` | `SEMGREP_WORKSPACE` | Where your source code gets mounted |
+| `/semgrep/outputs` | `SEMGREP_OUTPUT` | Where generated lockfiles and SBOMs are written |
 
-### As a Base Image
-
-Use this image as the `FROM` in your own Dockerfile. The `SEMGREP_WORKSPACE` and `SEMGREP_OUTPUT` directories are already created and available as environment variables.
-
-```dockerfile
-FROM ghcr.io/semgrep/supply-chain-base-image:main
-
-# Install your dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add your tooling
-COPY my-script.sh /usr/local/bin/
-
-# Code is mounted at $SEMGREP_WORKSPACE, outputs go to $SEMGREP_OUTPUT
-CMD ["my-script.sh"]
-```
-
-### Running Directly
-
-```bash
-docker run --rm \
-  -v "$(pwd):${SEMGREP_WORKSPACE:-/semgrep/workspace}" \
-  -v "./outputs:${SEMGREP_OUTPUT:-/semgrep/outputs}" \
-  ghcr.io/semgrep/supply-chain-base-image:main
-```
+You mount your project into the workspace, run a container, and collect the results from the outputs directory. No need to install package managers or tooling on your local machine.
 
 ## Examples
 
-The [`examples/lockfiles/`](examples/lockfiles/) directory contains ready-to-use Dockerfiles for generating lockfiles with common package managers.
+We provide ready-to-use Dockerfiles for the most common package managers. Each example can be used as-is or customized for your specific needs.
 
-| Example | Package Manager | Lockfile Generated |
+### Lockfile Generation
+
+Don't have a lockfile in your repository? These examples generate one from your project's manifest file (e.g., `package.json`, `pom.xml`, `pyproject.toml`).
+
+| Your Project Uses | Example | What Gets Generated |
 |---|---|---|
-| [`examples/lockfiles/npm/`](examples/lockfiles/npm/) | npm | `package-lock.json` |
-| [`examples/lockfiles/maven/`](examples/lockfiles/maven/) | Maven | `dependency-tree.txt` |
-| [`examples/lockfiles/poetry/`](examples/lockfiles/poetry/) | Poetry | `poetry.lock` |
-| [`examples/lockfiles/uv/`](examples/lockfiles/uv/) | uv | `uv.lock` |
-| [`examples/lockfiles/pip/`](examples/lockfiles/pip/) | pip | `requirements-locked.txt` |
-| [`examples/lockfiles/gradle/`](examples/lockfiles/gradle/) | Gradle | `gradle.lockfile` |
+| npm | [`examples/lockfiles/npm/`](examples/lockfiles/npm/) | `package-lock.json` |
+| Maven | [`examples/lockfiles/maven/`](examples/lockfiles/maven/) | `dependency-tree.txt` |
+| Poetry | [`examples/lockfiles/poetry/`](examples/lockfiles/poetry/) | `poetry.lock` |
+| uv | [`examples/lockfiles/uv/`](examples/lockfiles/uv/) | `uv.lock` |
+| pip | [`examples/lockfiles/pip/`](examples/lockfiles/pip/) | `requirements-locked.txt` |
+| Gradle | [`examples/lockfiles/gradle/`](examples/lockfiles/gradle/) | `gradle.lockfile` |
+| Bazel | [`examples/lockfiles/bazel/`](examples/lockfiles/bazel/) | `MODULE.bazel.lock` |
 
-Each example installs the package manager, generates a lockfile from code mounted at `$SEMGREP_WORKSPACE`, and writes the result to `$SEMGREP_OUTPUT`.
-
-For instance, to generate a `package-lock.json` for an npm project:
+**Example: Generate a lockfile for an npm project**
 
 ```bash
+# 1. Build the image (one-time step)
 docker build -t lockfile-npm examples/lockfiles/npm/
+
+# 2. Run it against your project
 docker run --rm \
   -v "$(pwd):/semgrep/workspace" \
   -v "./outputs:/semgrep/outputs" \
   lockfile-npm
+
+# 3. Check the result
+cat outputs/package-lock.json
 ```
 
 ### SBOM Generation
 
-The [`examples/sbom/`](examples/sbom/) directory contains ready-to-use Dockerfiles for generating CycloneDX SBOMs.
+Generate a [CycloneDX](https://cyclonedx.org/) Software Bill of Materials (SBOM) in JSON format. SBOMs provide a complete inventory of your project's dependencies, useful for vulnerability tracking and compliance.
 
-| Example | Tool | Output |
+| Your Project Uses | Example | Tool Used |
 |---|---|---|
-| [`examples/sbom/npm/`](examples/sbom/npm/) | `@cyclonedx/cyclonedx-npm` | `bom.json` |
-| [`examples/sbom/maven/`](examples/sbom/maven/) | `cyclonedx-maven-plugin` | `bom.json` |
-| [`examples/sbom/poetry/`](examples/sbom/poetry/) | `cyclonedx-py` | `bom.json` |
-| [`examples/sbom/uv/`](examples/sbom/uv/) | `uv export` | `bom.json` |
-| [`examples/sbom/pip/`](examples/sbom/pip/) | `cyclonedx-py` | `bom.json` |
-| [`examples/sbom/gradle/`](examples/sbom/gradle/) | `cyclonedx-gradle-plugin` | `bom.json` |
+| npm | [`examples/sbom/npm/`](examples/sbom/npm/) | `@cyclonedx/cyclonedx-npm` |
+| Maven | [`examples/sbom/maven/`](examples/sbom/maven/) | `cyclonedx-maven-plugin` |
+| Poetry | [`examples/sbom/poetry/`](examples/sbom/poetry/) | `cyclonedx-py` |
+| uv | [`examples/sbom/uv/`](examples/sbom/uv/) | `uv export` (built-in) |
+| pip | [`examples/sbom/pip/`](examples/sbom/pip/) | `cyclonedx-py` |
+| Gradle | [`examples/sbom/gradle/`](examples/sbom/gradle/) | `cyclonedx-gradle-plugin` |
+| Bazel | [`examples/sbom/bazel/`](examples/sbom/bazel/) | `cdxgen` |
 
-Each example generates a CycloneDX JSON SBOM from code mounted at `$SEMGREP_WORKSPACE` and writes `bom.json` to `$SEMGREP_OUTPUT`.
+All SBOM examples output a `bom.json` file to the outputs directory.
 
-For instance, to generate an SBOM for a uv project:
+**Example: Generate an SBOM for a Python (uv) project**
 
 ```bash
+# 1. Build the image (one-time step)
 docker build -t sbom-uv examples/sbom/uv/
+
+# 2. Run it against your project
 docker run --rm \
   -v "$(pwd):/semgrep/workspace" \
   -v "./outputs:/semgrep/outputs" \
   sbom-uv
+
+# 3. Check the result
+cat outputs/bom.json
 ```
 
-## Building Locally
+## Creating Your Own Image
+
+Use this base image as the starting point for your own Dockerfile. The workspace and output directories are already set up for you.
+
+```dockerfile
+FROM ghcr.io/semgrep/supply-chain-base-image:main
+
+# Install whatever tooling you need
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY my-script.sh /usr/local/bin/
+
+# Your script reads from $SEMGREP_WORKSPACE and writes to $SEMGREP_OUTPUT
+CMD ["my-script.sh"]
+```
+
+## Building the Base Image Locally
+
+If you want to build the base image yourself instead of pulling from the registry:
 
 ```bash
 docker build -t supply-chain-base-image .
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
