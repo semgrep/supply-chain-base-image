@@ -49,6 +49,29 @@ docker run --rm \
   ghcr.io/semgrep/supply-chain-base-image:main
 ```
 
+## Examples
+
+The [`examples/`](examples/) directory contains ready-to-use Dockerfiles for generating lockfiles with common package managers.
+
+| Example | Package Manager | Lockfile Generated |
+|---|---|---|
+| [`examples/npm/`](examples/npm/) | npm | `package-lock.json` |
+| [`examples/maven/`](examples/maven/) | Maven | `dependency-tree.txt` |
+| [`examples/poetry/`](examples/poetry/) | Poetry | `poetry.lock` |
+| [`examples/uv/`](examples/uv/) | uv | `uv.lock` |
+
+Each example installs the package manager, generates a lockfile from code mounted at `$SEMGREP_WORKSPACE`, and writes the result to `$SEMGREP_OUTPUT`.
+
+For instance, to generate a `package-lock.json` for an npm project:
+
+```bash
+docker build -t lockfile-npm examples/npm/
+docker run --rm \
+  -v "$(pwd):/semgrep/workspace" \
+  -v "./outputs:/semgrep/outputs" \
+  lockfile-npm
+```
+
 ## Building Locally
 
 ```bash
