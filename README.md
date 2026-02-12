@@ -18,8 +18,8 @@ docker pull ghcr.io/semgrep/supply-chain-base-image:main
 
 | Variable | Default | Description |
 |---|---|---|
-| `SEMGREP_WORKSPACE` | `/semgrep/workspace` | Mount point for source code to analyze |
-| `SEMGREP_OUTPUT` | `/semgrep/outputs` | Directory for analysis outputs |
+| `SEMGREP_WORKSPACE` | `/semgrep/workspace` | Mount point for source code to use to generate a lockfile/SBOM |
+| `SEMGREP_OUTPUT` | `/semgrep/outputs` | Directory for lockfile/SBOM outputs |
 
 ### As a Base Image
 
