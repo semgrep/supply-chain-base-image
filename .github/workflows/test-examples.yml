@@ -1,0 +1,44 @@
+name: Test Examples
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - examples/lockfiles/npm
+          - examples/lockfiles/maven
+          - examples/lockfiles/poetry
+          - examples/lockfiles/uv
+          - examples/lockfiles/pip
+          - examples/lockfiles/gradle
+          - examples/lockfiles/bazel
+          - examples/sbom/npm
+          - examples/sbom/maven
+          - examples/sbom/poetry
+          - examples/sbom/uv
+          - examples/sbom/pip
+          - examples/sbom/gradle
+          - examples/sbom/bazel
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.example }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.example }}
+          platforms: linux/amd64,linux/arm64
+          push: false

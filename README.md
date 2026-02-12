@@ -113,6 +113,31 @@ COPY my-script.sh /usr/local/bin/
 CMD ["my-script.sh"]
 ```
 
+## Verifying the Image
+
+Every image we publish is signed and includes [SLSA v1.0 Build L3](https://slsa.dev/) provenance and an embedded SBOM. You can verify that the image you pulled was built by our CI pipeline and hasn't been tampered with.
+
+### Verify build provenance
+
+Requires the [GitHub CLI](https://cli.github.com/):
+
+```bash
+gh attestation verify oci://ghcr.io/semgrep/supply-chain-base-image:main \
+  -R semgrep/supply-chain-base-image
+```
+
+### Inspect the embedded SBOM and provenance
+
+```bash
+# View provenance
+docker buildx imagetools inspect ghcr.io/semgrep/supply-chain-base-image:main \
+  --format '{{ json .Provenance }}'
+
+# View SBOM
+docker buildx imagetools inspect ghcr.io/semgrep/supply-chain-base-image:main \
+  --format '{{ json .SBOM }}'
+```
+
 ## Building the Base Image Locally
 
 If you want to build the base image yourself instead of pulling from the registry:
