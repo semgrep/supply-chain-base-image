@@ -25,7 +25,7 @@ The base image sets up two standard directories:
 | Directory | Environment Variable | Purpose |
 |---|---|---|
 | `/semgrep/workspace` | `SEMGREP_WORKSPACE` | Where your source code gets mounted |
-| `/semgrep/outputs` | `SEMGREP_OUTPUT` | Where generated lockfiles and SBOMs are written |
+| `/semgrep/outputs` | `SEMGREP_OUTPUT` | Where generated lockfiles or SBOMs are written for consumption by Semgrep |
 
 You mount your project into the workspace, run a container, and collect the results from the outputs directory. No need to install package managers or tooling on your local machine.
 
