@@ -37,7 +37,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Build ${{ matrix.example }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.example }}
           platforms: linux/amd64,linux/arm64
