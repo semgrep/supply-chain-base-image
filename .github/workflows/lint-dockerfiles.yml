@@ -1,0 +1,79 @@
+name: Lint Dockerfiles
+
+on:
+  pull_request:
+    paths:
+      - "**/Dockerfile"
+      - ".hadolint.yaml"
+      - ".github/workflows/lint-dockerfiles.yml"
+  push:
+    branches: [main]
+    paths:
+      - "**/Dockerfile"
+      - ".hadolint.yaml"
+      - ".github/workflows/lint-dockerfiles.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  hadolint:
+    name: Hadolint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install hadolint
+        env:
+          HADOLINT_VERSION: v2.14.0
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/hadolint \
+            "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          chmod +x /tmp/hadolint
+          /tmp/hadolint --version
+
+      - name: Run hadolint
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r f; do
+            echo "=== $f ==="
+            /tmp/hadolint "$f" || fail=1
+          done < <(find . -name Dockerfile -not -path '*/node_modules/*' | sort)
+          exit "$fail"
+
+  dockerfmt:
+    name: dockerfmt
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dockerfmt
+        env:
+          DOCKERFMT_VERSION: v0.5.2
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/dockerfmt.tar.gz \
+            "https://github.com/reteps/dockerfmt/releases/download/${DOCKERFMT_VERSION}/dockerfmt-${DOCKERFMT_VERSION}-linux-amd64.tar.gz"
+          tar -xz -C /usr/local/bin -f /tmp/dockerfmt.tar.gz dockerfmt
+          dockerfmt version
+
+      - name: Check formatting
+        run: |
+          set -euo pipefail
+          mapfile -t FILES < <(find . -name Dockerfile -not -path '*/node_modules/*' | sort)
+          dockerfmt --check "${FILES[@]}"

@@ -3,42 +3,112 @@ name: Test Examples
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build-examples:
+  changes:
+    name: Detect changed examples
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      examples: ${{ steps.set.outputs.examples }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Determine examples to build
+        id: set
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t ALL_EXAMPLES < <(find examples/lockfiles examples/sbom -mindepth 2 -maxdepth 2 -name Dockerfile -printf '%h\n' | sort)
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD)
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+
+            # Foundational changes → rebuild every example
+            if echo "$CHANGED_FILES" | grep -qE '^(Dockerfile|\.hadolint\.yaml|\.github/workflows/test-examples\.yml)$'; then
+              echo "Foundational file changed; selecting all examples."
+              SELECTED=("${ALL_EXAMPLES[@]}")
+            else
+              SELECTED=()
+              for ex in "${ALL_EXAMPLES[@]}"; do
+                if echo "$CHANGED_FILES" | grep -qE "^${ex}/"; then
+                  SELECTED+=("$ex")
+                fi
+              done
+            fi
+          else
+            SELECTED=("${ALL_EXAMPLES[@]}")
+          fi
+
+          if [ "${#SELECTED[@]}" -eq 0 ]; then
+            JSON='[]'
+          else
+            JSON=$(printf '%s\n' "${SELECTED[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+          echo "Selected: $JSON"
+          echo "examples=$JSON" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.example }}
+    needs: changes
+    if: needs.changes.outputs.examples != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        example:
-          - examples/lockfiles/npm
-          - examples/lockfiles/maven
-          - examples/lockfiles/poetry
-          - examples/lockfiles/uv
-          - examples/lockfiles/pip
-          - examples/lockfiles/gradle
-          - examples/lockfiles/bazel
-          - examples/sbom/npm
-          - examples/sbom/maven
-          - examples/sbom/poetry
-          - examples/sbom/uv
-          - examples/sbom/pip
-          - examples/sbom/gradle
-          - examples/sbom/bazel
+        example: ${{ fromJson(needs.changes.outputs.examples) }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
+      # Use the docker driver so the host docker daemon's image cache is
+      # shared between the base-image build and the example build below.
+      # The default docker-container driver keeps a separate cache, which
+      # would cause the example build to pull the stale registry base
+      # instead of using the freshly built one.
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+        with:
+          driver: docker
+
+      # Build the base image from the PR's source under the same tag the
+      # examples reference. The published registry image is the previous
+      # release, which may not match the base Dockerfile in this PR
+      # (e.g. user / FS layout changes).
+      - name: Build base image
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: Dockerfile
+          tags: ghcr.io/semgrep/supply-chain-base-image:main
+          push: false
 
       - name: Build ${{ matrix.example }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: ${{ matrix.example }}
-          platforms: linux/amd64,linux/arm64
           push: false
+          pull: false

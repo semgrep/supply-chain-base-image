@@ -1,0 +1,81 @@
+name: Actions lint
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  zizmor:
+    name: Zizmor (security audit)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # upload SARIF findings to GitHub code scanning
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+
+      - name: Run zizmor (pedantic)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uvx zizmor --persona=pedantic --format sarif .github/ > zizmor.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3.36.0
+        with:
+          sarif_file: zizmor.sarif
+          category: zizmor
+
+  ratchet:
+    name: Ratchet (verify SHA pins)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install ratchet
+        env:
+          RATCHET_VERSION: 0.11.4
+          # sha512 from ratchet_0.11.4_SHA512SUMS for linux_amd64
+          RATCHET_SHA512: b42ad0e83c53ae308d36f2d0256249aee98325ceb6f7cb5e29fe9eb411f23b4521d43adcfb2722c9ad2cc09012d485c1292f06e40985531260dee82d9b1a637d
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/ratchet.tar.gz \
+            "https://github.com/sethvargo/ratchet/releases/download/v${RATCHET_VERSION}/ratchet_${RATCHET_VERSION}_linux_amd64.tar.gz"
+          echo "${RATCHET_SHA512}  /tmp/ratchet.tar.gz" | sha512sum --check --status
+          tar -xz -C /usr/local/bin -f /tmp/ratchet.tar.gz ratchet
+          ratchet --version
+
+      - name: Verify all workflow refs are pinned
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r f; do
+            echo "=== $f ==="
+            ratchet lint "$f" || fail=1
+          done < <(find .github/workflows -name '*.yml' | sort)
+          exit "$fail"
