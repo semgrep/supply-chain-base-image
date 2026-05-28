@@ -84,20 +84,26 @@ jobs:
         with:
           persist-credentials: false
 
+      # Use the docker driver so the host docker daemon's image cache is
+      # shared between the base-image build and the example build below.
+      # The default docker-container driver keeps a separate cache, which
+      # would cause the example build to pull the stale registry base
+      # instead of using the freshly built one.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+        with:
+          driver: docker
 
-      # Build the base image from the PR's source and load it into the local
-      # docker store under the same tag the examples reference. The published
-      # registry image is the previous release, which may not match the
-      # base Dockerfile in this PR (e.g. user / FS layout changes).
+      # Build the base image from the PR's source under the same tag the
+      # examples reference. The published registry image is the previous
+      # release, which may not match the base Dockerfile in this PR
+      # (e.g. user / FS layout changes).
       - name: Build base image
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: .
           file: Dockerfile
           tags: ghcr.io/semgrep/supply-chain-base-image:main
-          load: true
           push: false
 
       - name: Build ${{ matrix.example }}
