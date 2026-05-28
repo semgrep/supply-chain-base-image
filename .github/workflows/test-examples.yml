@@ -84,15 +84,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      # Build the base image from the PR's source and load it into the local
+      # docker store under the same tag the examples reference. The published
+      # registry image is the previous release, which may not match the
+      # base Dockerfile in this PR (e.g. user / FS layout changes).
+      - name: Build base image
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: Dockerfile
+          tags: ghcr.io/semgrep/supply-chain-base-image:main
+          load: true
+          push: false
 
       - name: Build ${{ matrix.example }}
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: ${{ matrix.example }}
-          platforms: linux/amd64,linux/arm64
           push: false
+          pull: false
