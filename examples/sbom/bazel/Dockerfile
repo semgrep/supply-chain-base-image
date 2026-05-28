@@ -49,8 +49,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* /etc/apt/keyrings /etc/apt/sources.list.d/nodesource.list
 
 COPY --from=builder /usr/local/bin/bazel /usr/local/bin/bazel
-COPY --from=builder /usr/lib/node_modules/@cyclonedx /usr/lib/node_modules/@cyclonedx
-COPY --from=builder /usr/bin/cdxgen /usr/bin/cdxgen
+COPY --from=builder /usr/lib/node_modules /usr/lib/node_modules
+RUN ln -s /usr/lib/node_modules/@cyclonedx/cdxgen/bin/cdxgen.js /usr/local/bin/cdxgen
 
 USER semgrep
 
