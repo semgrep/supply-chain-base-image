@@ -1,0 +1,3 @@
+# Minimal fixture used to smoke-test the pip examples in CI.
+# Pinned to an old, zero-dependency release for fast, deterministic resolution.
+six==1.16.0

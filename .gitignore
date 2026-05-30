@@ -1,0 +1,5 @@
+# Local tooling caches
+.mandoline/
+
+# Generated outputs from running the examples locally
+outputs/

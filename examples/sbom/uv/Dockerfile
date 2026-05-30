@@ -1,4 +1,4 @@
-FROM ghcr.io/semgrep/supply-chain-base-image:main AS builder
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1 AS builder
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 USER semgrep
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-FROM ghcr.io/semgrep/supply-chain-base-image:main
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1
 
 COPY --from=builder --chown=semgrep:semgrep /home/semgrep/.local /home/semgrep/.local
 

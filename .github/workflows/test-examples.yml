@@ -43,7 +43,7 @@ jobs:
             echo "$CHANGED_FILES"
 
             # Foundational changes → rebuild every example
-            if echo "$CHANGED_FILES" | grep -qE '^(Dockerfile|\.hadolint\.yaml|\.github/workflows/test-examples\.yml)$'; then
+            if echo "$CHANGED_FILES" | grep -qE '^(Dockerfile|\.hadolint\.yaml|\.github/workflows/test-examples\.yml|tests/)'; then
               echo "Foundational file changed; selecting all examples."
               SELECTED=("${ALL_EXAMPLES[@]}")
             else
@@ -103,7 +103,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          tags: ghcr.io/semgrep/supply-chain-base-image:main
+          tags: ghcr.io/semgrep/supply-chain-base-image:0.1
           push: false
 
       - name: Build ${{ matrix.example }}
@@ -112,3 +112,13 @@ jobs:
           context: ${{ matrix.example }}
           push: false
           pull: false
+          load: true
+          tags: example-under-test:smoke
+
+      # Run the example against a fixture project and assert it produces the
+      # documented lockfile/SBOM output. Ecosystems without a fixture are
+      # build-only and the script skips them.
+      - name: Smoke test ${{ matrix.example }}
+        env:
+          EXAMPLE: ${{ matrix.example }}
+        run: ./tests/smoke-test.sh "$EXAMPLE" example-under-test:smoke

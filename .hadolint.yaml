@@ -3,3 +3,7 @@ ignored:
   # Debian package versions shift with security updates and pinning would
   # break reproducibility rather than improve it.
   - DL3008
+  # DL3005: Do not use apt-get upgrade. Intentional in the base image — we
+  # apply available Debian security updates at build time so freshly-published
+  # fixes land even before they are baked into the pinned base digest.
+  - DL3005

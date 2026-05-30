@@ -18,8 +18,65 @@ env:
   IMAGE_NAME: semgrep/supply-chain-base-image
 
 jobs:
+  scan:
+    name: Scan image for vulnerabilities
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # upload Trivy SARIF findings to GitHub code scanning
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      # Build a single-arch (host amd64) image and load it into the local
+      # docker daemon so Trivy can scan the exact layers we are about to
+      # publish. Multi-arch images cannot be `load`ed, so the gate runs on
+      # amd64; the published manifest is built separately in build-and-push.
+      - name: Build image for scanning
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          push: false
+          tags: supply-chain-base-image:scan
+
+      # Full inventory (all severities, including unfixed) -> code scanning.
+      - name: Trivy scan (report to code scanning)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: supply-chain-base-image:scan
+          format: sarif
+          output: trivy.sarif
+          severity: LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+
+      - name: Upload Trivy SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
+        with:
+          sarif_file: trivy.sarif
+          category: trivy
+
+      # Gate: fail the build on fixable HIGH/CRITICAL vulnerabilities. Unfixed
+      # CVEs (no upstream patch available) are reported above but do not block,
+      # since there is no action we can take to remediate them.
+      - name: Trivy scan (gate on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: supply-chain-base-image:scan
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
   build-and-push:
     name: Build and push base image
+    needs: scan # never publish an image that failed the vulnerability gate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -52,6 +109,10 @@ jobs:
         uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # `latest` tracks the newest *release* only (latest=auto tags it on
+          # semver tag pushes, never on plain branch pushes to main).
+          flavor: |
+            latest=auto
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
