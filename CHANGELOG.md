@@ -22,6 +22,9 @@ page.
 
 ### Changed
 
+- The base image now applies available Debian security updates at build time
+  (`apt-get upgrade`) and pins a newer `bookworm-slim` digest, clearing fixable
+  HIGH/CRITICAL CVEs (libgnutls30, libcap2) that the scan gate flagged.
 - The published image now carries a `latest` tag pointing at the newest
   release.
 - The README and all example `Dockerfile`s now reference the stable `0.1` tag
