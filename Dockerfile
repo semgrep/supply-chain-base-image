@@ -10,6 +10,11 @@ LABEL org.opencontainers.image.url="https://github.com/semgrep/supply-chain-base
 ENV SEMGREP_WORKSPACE=/semgrep/workspace
 ENV SEMGREP_OUTPUT=/semgrep/outputs
 
-RUN mkdir -p "${SEMGREP_WORKSPACE}" "${SEMGREP_OUTPUT}"
+RUN groupadd --gid 1000 semgrep \
+    && useradd --uid 1000 --gid semgrep --create-home --shell /bin/bash semgrep \
+    && mkdir -p "${SEMGREP_WORKSPACE}" "${SEMGREP_OUTPUT}" \
+    && chown -R semgrep:semgrep /semgrep
 
 WORKDIR ${SEMGREP_WORKSPACE}
+
+USER semgrep
