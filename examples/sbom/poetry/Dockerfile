@@ -1,4 +1,4 @@
-FROM ghcr.io/semgrep/supply-chain-base-image:main AS builder
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1 AS builder
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -11,7 +11,7 @@ USER semgrep
 RUN pipx install poetry==2.4.1 \
     && pipx install cyclonedx-bom==7.3.0
 
-FROM ghcr.io/semgrep/supply-chain-base-image:main
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \

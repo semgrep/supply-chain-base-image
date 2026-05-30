@@ -1,0 +1,10 @@
+{
+  "name": "smoke-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal fixture used to smoke-test the npm examples in CI.",
+  "license": "MIT",
+  "dependencies": {
+    "is-number": "7.0.0"
+  }
+}

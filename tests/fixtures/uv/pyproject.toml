@@ -1,0 +1,10 @@
+# Minimal fixture used to smoke-test the uv examples in CI.
+[project]
+name = "smoke-fixture"
+version = "0.0.0"
+requires-python = ">=3.9"
+dependencies = ["six==1.16.0"]
+
+[tool.uv]
+# Supply-chain cooldown: ignore packages published in the last week.
+exclude-newer = "1 week"

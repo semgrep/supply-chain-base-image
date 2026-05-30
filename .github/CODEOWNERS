@@ -1,0 +1,6 @@
+# Code owners for the Supply Chain Base Image.
+#
+# These owners are automatically requested for review on every PR. Update the
+# team/handle below to match your org before enabling "Require review from Code
+# Owners" in branch protection — an unmatched owner will not be able to approve.
+* @semgrep/supply-chain

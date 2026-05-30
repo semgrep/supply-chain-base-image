@@ -13,10 +13,27 @@ A ready-to-use Docker base image for generating lockfiles and Software Bills of 
 Pull the base image:
 
 ```bash
-docker pull ghcr.io/semgrep/supply-chain-base-image:main
+docker pull ghcr.io/semgrep/supply-chain-base-image:0.1
 ```
 
 Then pick an example below that matches your project's package manager, build it, and run it against your code.
+
+### Choosing a tag
+
+| Tag | Moves? | Use it when |
+|---|---|---|
+| `0.1.3` | Immutable | You want a specific, fully reproducible release |
+| `0.1` | Patch updates within the minor | You want bug/security fixes but no breaking changes (recommended default) |
+| `latest` | Every release | You always want the newest release |
+| `@sha256:…` | Immutable | Maximum reproducibility — pin to a digest |
+
+We **do not** recommend pulling a branch tag (such as `main`); it changes on every commit and is not a stable release. For the strongest supply-chain guarantees, pin to an immutable digest:
+
+```bash
+docker pull ghcr.io/semgrep/supply-chain-base-image:0.1
+docker inspect --format '{{ index .RepoDigests 0 }}' ghcr.io/semgrep/supply-chain-base-image:0.1
+# then use the resulting ...@sha256:... in your FROM / pull
+```
 
 ## How It Works
 
@@ -100,7 +117,7 @@ cat outputs/bom.json
 Use this base image as the starting point for your own Dockerfile. The workspace and output directories are already set up for you.
 
 ```dockerfile
-FROM ghcr.io/semgrep/supply-chain-base-image:main
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1
 
 # Install whatever tooling you need
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -122,7 +139,7 @@ Every image we publish is signed and includes [SLSA v1.0 Build L3](https://slsa.
 Requires the [GitHub CLI](https://cli.github.com/):
 
 ```bash
-gh attestation verify oci://ghcr.io/semgrep/supply-chain-base-image:main \
+gh attestation verify oci://ghcr.io/semgrep/supply-chain-base-image:0.1 \
   -R semgrep/supply-chain-base-image
 ```
 
@@ -130,11 +147,11 @@ gh attestation verify oci://ghcr.io/semgrep/supply-chain-base-image:main \
 
 ```bash
 # View provenance
-docker buildx imagetools inspect ghcr.io/semgrep/supply-chain-base-image:main \
+docker buildx imagetools inspect ghcr.io/semgrep/supply-chain-base-image:0.1 \
   --format '{{ json .Provenance }}'
 
 # View SBOM
-docker buildx imagetools inspect ghcr.io/semgrep/supply-chain-base-image:main \
+docker buildx imagetools inspect ghcr.io/semgrep/supply-chain-base-image:0.1 \
   --format '{{ json .SBOM }}'
 ```
 

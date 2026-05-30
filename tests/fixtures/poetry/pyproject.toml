@@ -1,0 +1,16 @@
+# Minimal fixture used to smoke-test the poetry examples in CI.
+[tool.poetry]
+name = "smoke-fixture"
+version = "0.0.0"
+description = "Minimal fixture for smoke-testing the poetry examples."
+authors = ["Semgrep <security@semgrep.com>"]
+# Not an installable package, just a dependency manifest to resolve.
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+six = "1.16.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"

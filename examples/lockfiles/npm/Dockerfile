@@ -1,4 +1,4 @@
-FROM ghcr.io/semgrep/supply-chain-base-image:main
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \

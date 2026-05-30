@@ -1,4 +1,4 @@
-FROM ghcr.io/semgrep/supply-chain-base-image:main AS builder
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1 AS builder
 
 ARG SBT_VERSION=1.10.7
 ARG NODE_MAJOR=22
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 USER semgrep
 
-FROM ghcr.io/semgrep/supply-chain-base-image:main
+FROM ghcr.io/semgrep/supply-chain-base-image:0.1
 
 ARG NODE_MAJOR=22
 
