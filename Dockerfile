@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim@sha256:f06537653ac770703bc45b4b113475bd402f451e85223f0f2837acbf89ab020a
+FROM debian:bookworm-slim@sha256:0104b334637a5f19aa9c983a91b54c89887c0984081f2068983107a6f6c21eeb
 
 LABEL org.opencontainers.image.source="https://github.com/semgrep/supply-chain-base-image"
 LABEL org.opencontainers.image.description="Base Docker image for generating lockfiles and SBOMs from source code"
